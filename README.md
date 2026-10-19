@@ -1,8 +1,8 @@
 # term
 
-Interactive terminal support for Neutron. The package keeps the public API in
-Neutron while using the compiler's small native terminal substrate for raw
-mode, alternate-screen control, and key polling.
+Interactive terminal support for Neutron. The public API is implemented in
+Neutron and uses the compiler's native terminal capability for raw mode,
+alternate-screen control, and key polling.
 
 ## Install
 
