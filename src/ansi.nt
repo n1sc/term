@@ -1,0 +1,16 @@
+use strings
+
+/// The escape byte that begins every control sequence.
+private fun escape() -> string {
+    return strings.from_char_code(27)
+}
+
+/// A control sequence: `ESC [ parameters terminator`.
+fun csi(view string parameters, view string terminator) -> string {
+    return escape() + "[" + copy(parameters) + copy(terminator)
+}
+
+/// A select-graphic-rendition sequence: `ESC [ parameters m`.
+fun sgr(view string parameters) -> string {
+    return csi(parameters, "m")
+}

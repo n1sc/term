@@ -1,5 +1,5 @@
 [package]
 name = "term"
-entry = "lib.nt"
+entry = "src/lib.nt"
 output = "term"
 compiler = "^0.1"

@@ -1,0 +1,383 @@
+//! Terminal toolkit: output, cursor and screen control, styling, text layout,
+//! key and line input, and a few ready-made widgets.
+//!
+//! Every function here delegates to one of the focused modules beside this
+//! file; the entry file is the package's public surface.
+
+use "input.nt" as term_input
+use "screen.nt" as term_screen
+use "style.nt" as term_style
+use "text.nt" as term_text
+use "widgets.nt" as term_widgets
+
+// ── output ─────────────────────────────────────────────────────────────────
+
+/// Write `text` without a trailing newline.
+fun write(view string text) {
+    term_screen.write(text)
+}
+
+/// Write `text` followed by a newline.
+fun write_line(view string text) {
+    term_screen.write_line(text)
+}
+
+/// Move to `column`, `row` (zero-based) and write `text`.
+fun write_at(int column, int row, view string text) {
+    term_screen.write_at(column, row, text)
+}
+
+/// Flush the output stream.
+fun flush() {
+    term_screen.flush()
+}
+
+// ── screen ─────────────────────────────────────────────────────────────────
+
+/// Terminal width in cells (`COLUMNS`, or 80 when unset).
+fun columns() -> int {
+    return term_screen.columns()
+}
+
+/// Terminal height in cells (`LINES`, or 24 when unset).
+fun rows() -> int {
+    return term_screen.rows()
+}
+
+/// Clear the screen and home the cursor.
+fun clear() {
+    term_screen.clear()
+}
+
+/// Clear the current line.
+fun clear_line() {
+    term_screen.clear_line()
+}
+
+/// Clear from the cursor to the end of the screen.
+fun clear_to_end() {
+    term_screen.clear_to_end()
+}
+
+/// Move the cursor to `column`, `row` (zero-based).
+fun move_to(int column, int row) {
+    term_screen.move_to(column, row)
+}
+
+/// Move the cursor up `count` lines.
+fun move_up(int count) {
+    term_screen.move_up(count)
+}
+
+/// Move the cursor down `count` lines.
+fun move_down(int count) {
+    term_screen.move_down(count)
+}
+
+/// Move the cursor right `count` columns.
+fun move_right(int count) {
+    term_screen.move_right(count)
+}
+
+/// Move the cursor left `count` columns.
+fun move_left(int count) {
+    term_screen.move_left(count)
+}
+
+/// Hide the cursor.
+fun hide_cursor() {
+    term_screen.hide_cursor()
+}
+
+/// Show the cursor.
+fun show_cursor() {
+    term_screen.show_cursor()
+}
+
+/// Whether stdout is an interactive terminal.
+fun is_tty() -> bool {
+    return term_screen.is_tty()
+}
+
+/// Enter raw mode and the alternate screen; returns the session handle.
+fun open() -> int {
+    return term_screen.open()
+}
+
+/// Restore the terminal after `open`.
+fun restore(int handle) -> bool {
+    return term_screen.restore(handle)
+}
+
+// ── style ──────────────────────────────────────────────────────────────────
+
+/// Bold text.
+fun bold(view string text) -> string {
+    return term_style.bold(text)
+}
+
+/// Faint text.
+fun dim(view string text) -> string {
+    return term_style.dim(text)
+}
+
+/// Italic text.
+fun italic(view string text) -> string {
+    return term_style.italic(text)
+}
+
+/// Underlined text.
+fun underline(view string text) -> string {
+    return term_style.underline(text)
+}
+
+/// Blinking text.
+fun blink(view string text) -> string {
+    return term_style.blink(text)
+}
+
+/// Text with colours reversed.
+fun reverse(view string text) -> string {
+    return term_style.reverse(text)
+}
+
+/// Struck-through text.
+fun strike(view string text) -> string {
+    return term_style.strike(text)
+}
+
+/// Text in palette colour `color` (0–255).
+fun fg(view string text, int color) -> string {
+    return term_style.fg(text, color)
+}
+
+/// Text on palette colour `color` (0–255).
+fun bg(view string text, int color) -> string {
+    return term_style.bg(text, color)
+}
+
+/// Text in one colour on another.
+fun styled(view string text, int color, int background) -> string {
+    return term_style.styled(text, color, background)
+}
+
+/// The sequence that clears every attribute.
+fun reset() -> string {
+    return term_style.reset()
+}
+
+/// `text` without its escape sequences.
+fun strip(view string text) -> string {
+    return term_style.strip(text)
+}
+
+/// Black (0).
+fun black() -> int {
+    return term_style.black()
+}
+
+/// Red (1).
+fun red() -> int {
+    return term_style.red()
+}
+
+/// Green (2).
+fun green() -> int {
+    return term_style.green()
+}
+
+/// Yellow (3).
+fun yellow() -> int {
+    return term_style.yellow()
+}
+
+/// Blue (4).
+fun blue() -> int {
+    return term_style.blue()
+}
+
+/// Magenta (5).
+fun magenta() -> int {
+    return term_style.magenta()
+}
+
+/// Cyan (6).
+fun cyan() -> int {
+    return term_style.cyan()
+}
+
+/// White (7).
+fun white() -> int {
+    return term_style.white()
+}
+
+/// Bright black (8).
+fun bright_black() -> int {
+    return term_style.bright_black()
+}
+
+/// Bright red (9).
+fun bright_red() -> int {
+    return term_style.bright_red()
+}
+
+/// Bright green (10).
+fun bright_green() -> int {
+    return term_style.bright_green()
+}
+
+/// Bright yellow (11).
+fun bright_yellow() -> int {
+    return term_style.bright_yellow()
+}
+
+/// Bright blue (12).
+fun bright_blue() -> int {
+    return term_style.bright_blue()
+}
+
+/// Bright magenta (13).
+fun bright_magenta() -> int {
+    return term_style.bright_magenta()
+}
+
+/// Bright cyan (14).
+fun bright_cyan() -> int {
+    return term_style.bright_cyan()
+}
+
+/// Bright white (15).
+fun bright_white() -> int {
+    return term_style.bright_white()
+}
+
+// ── text ───────────────────────────────────────────────────────────────────
+
+/// Visible width of `text` in characters, ignoring escape sequences.
+fun width(view string text) -> int {
+    return term_text.width(text)
+}
+
+/// `text` padded on the right to `target` visible characters.
+fun pad(view string text, int target) -> string {
+    return term_text.pad_right(text, target)
+}
+
+/// `text` padded on the right to `target` visible characters.
+fun pad_right(view string text, int target) -> string {
+    return term_text.pad_right(text, target)
+}
+
+/// `text` padded on the left to `target` visible characters.
+fun pad_left(view string text, int target) -> string {
+    return term_text.pad_left(text, target)
+}
+
+/// `text` centred in `target` visible characters.
+fun center(view string text, int target) -> string {
+    return term_text.center(text, target)
+}
+
+/// The first `max` visible characters of `text`; styling is dropped.
+fun truncate(view string text, int max) -> string {
+    return term_text.truncate(text, max)
+}
+
+/// Break `text` into lines of at most `target` visible characters.
+///
+/// The lines come back joined by newlines.
+fun wrap(view string text, int target) -> string {
+    return term_text.wrap(text, target)
+}
+
+/// The width of column `index` when `count` columns share `total` cells.
+///
+/// `gap` cells sit between neighbouring columns.
+fun split(int total, int count, int gap, int index) -> int {
+    return term_text.split(total, count, gap, index)
+}
+
+/// The left offset that centres `content` in `total` cells.
+fun center_offset(int total, int content) -> int {
+    return term_text.center_offset(total, content)
+}
+
+// ── input ──────────────────────────────────────────────────────────────────
+
+/// Wait up to `timeout_ms` for a key; `""` on timeout.
+///
+/// Requires a session from `open`. The name is one of `character`, `space`,
+/// `enter`, `escape`, `tab`, `backspace`, `delete`, `home`, `end`,
+/// `page_up`, `page_down`, `up`, `down`, `left`, `right`, `ctrl_c`, `other`.
+fun read_key(int handle, float timeout_ms) -> string {
+    return term_input.read_key(handle, timeout_ms)
+}
+
+/// The character of the last key, when it was a character key.
+fun key_character() -> string {
+    return term_input.key_character()
+}
+
+/// Whether the last key used Control.
+fun key_ctrl() -> bool {
+    return term_input.key_ctrl()
+}
+
+/// Read one line in raw mode: echo, backspace, Enter to finish.
+///
+/// Control-C abandons the line and returns `""`.
+fun read_line(int handle) -> string {
+    return term_input.read_line(handle)
+}
+
+/// Write `question` and read one line.
+fun prompt(int handle, view string question) -> string {
+    return term_input.prompt(handle, question)
+}
+
+/// Ask a yes/no question; anything but `y` or `Y` is no.
+fun confirm(int handle, view string question) -> bool {
+    return term_input.confirm(handle, question)
+}
+
+/// Choose from `options` with the arrow keys; `-1` when cancelled.
+fun select(int handle, view string question, view array[string] options) -> int {
+    return term_input.select(handle, question, options)
+}
+
+// ── widgets ────────────────────────────────────────────────────────────────
+
+/// A horizontal line of `width` box-drawing characters.
+fun hline(int width) -> string {
+    return term_widgets.hline(width)
+}
+
+/// A horizontal line of `width` copies of `character`.
+fun hline_char(int width, view string character) -> string {
+    return term_widgets.hline_char(width, character)
+}
+
+/// A horizontal rule with an optional centred title.
+fun rule(view string title, int width) -> string {
+    return term_widgets.rule(title, width)
+}
+
+/// A framed box around `lines`, `width` cells wide including the border.
+fun box(view string title, view array[string] lines, int width) -> string {
+    return term_widgets.box(title, lines, width)
+}
+
+/// A progress bar `width` cells wide, including its brackets.
+fun progress(int done, int total, int width) -> string {
+    return term_widgets.progress(done, total, width)
+}
+
+/// One frame of an ASCII spinner, optionally followed by `label`.
+fun spinner(int frame, view string label) -> string {
+    return term_widgets.spinner(frame, label)
+}
+
+/// A table from `headers` and `rows` of tab-separated cells.
+fun table(view array[string] headers, view array[string] rows, view array[int] widths) -> string {
+    return term_widgets.table(headers, rows, widths)
+}

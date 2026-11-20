@@ -1,0 +1,153 @@
+use arrays
+use strings
+
+/// The byte offset just past the control sequence starting at `start`.
+private fun skip_sequence(view string text, int start) -> int {
+    var length = strings.length(text)
+    var i = start + 1
+    if (i < length && strings.char_code(text, i) == 91) {
+        i = i + 1
+        while (i < length) {
+            var code = strings.char_code(text, i)
+            i = i + 1
+            if (code >= 64 && code <= 126) {
+                return i
+            }
+        }
+    }
+    return i
+}
+
+/// The number of visible characters in `text`, ignoring escape sequences.
+fun width(view string text) -> int {
+    var length = strings.length(text)
+    var count = 0
+    var i = 0
+    while (i < length) {
+        if (strings.char_code(text, i) == 27) {
+            i = skip_sequence(text, i)
+        } else {
+            var character = strings.char_at(text, i)
+            count = count + 1
+            i = i + strings.length(character)
+        }
+    }
+    return count
+}
+
+/// `text` padded on the right with spaces to `target` visible characters.
+fun pad_right(view string text, int target) -> string {
+    var current = width(text)
+    if (current >= target) {
+        return copy(text)
+    }
+    return copy(text) + strings.repeat(" ", target - current)
+}
+
+/// `text` padded on the left with spaces to `target` visible characters.
+fun pad_left(view string text, int target) -> string {
+    var current = width(text)
+    if (current >= target) {
+        return copy(text)
+    }
+    return strings.repeat(" ", target - current) + copy(text)
+}
+
+/// `text` padded on the right, the default padding direction.
+fun pad(view string text, int target) -> string {
+    return pad_right(text, target)
+}
+
+/// `text` centred in `target` visible characters.
+fun center(view string text, int target) -> string {
+    var current = width(text)
+    if (current >= target) {
+        return copy(text)
+    }
+    var total = target - current
+    var left = total / 2
+    return strings.repeat(" ", left) + copy(text) + strings.repeat(" ", total - left)
+}
+
+/// The first `max` visible characters of `text`; styling is dropped.
+fun truncate(view string text, int max) -> string {
+    if (max <= 0) {
+        return ""
+    }
+    var length = strings.length(text)
+    var count = 0
+    var i = 0
+    var out = ""
+    while (i < length && count < max) {
+        if (strings.char_code(text, i) == 27) {
+            i = skip_sequence(text, i)
+        } else {
+            var character = strings.char_at(text, i)
+            out = out + character
+            count = count + 1
+            i = i + strings.length(character)
+        }
+    }
+    return out
+}
+
+/// Break `text` into lines of at most `target` visible characters.
+///
+/// The lines come back joined by newlines, so a caller can print the result
+/// directly or split it with `strings.split_array` to work per line.
+fun wrap(view string text, int target) -> string {
+    if (target <= 0) {
+        return ""
+    }
+    var words = strings.split_array(strings.trim(text), " ")
+    var count = arrays.length(words)
+    var out = ""
+    var line = ""
+    for (var i = 0; i < count; i = i + 1) {
+        var word = arrays.get(words, i)
+        if (strings.is_empty(word)) {
+            continue
+        }
+        if (strings.is_empty(line)) {
+            line = copy(word)
+        } else if (width(line) + 1 + width(word) <= target) {
+            line = line + " " + copy(word)
+        } else {
+            out = out + line + "\n"
+            line = copy(word)
+        }
+    }
+    if (!strings.is_empty(line)) {
+        out = out + line
+    }
+    return out
+}
+
+/// The width of column `index` when `count` columns share `total` cells.
+///
+/// The first `total - count * base` columns are one cell wider so the widths
+/// always add up to the available space.
+fun split(int total, int count, int gap, int index) -> int {
+    if (count <= 0 || index < 0 || index >= count) {
+        return 0
+    }
+    var usable = total - gap * (count - 1)
+    if (usable < 0) {
+        usable = 0
+    }
+    var base = usable / count
+    var extra = usable - base * count
+    if (index < extra) {
+        return base + 1
+    }
+    return base
+}
+
+/// The left offset that centres `content` in `total` cells.
+fun center_offset(int total, int content) -> int {
+    var offset = (total - content) / 2
+    if (offset < 0) {
+        return 0
+    }
+    return offset
+}

@@ -1,0 +1,120 @@
+use fmt
+use io
+use os
+use strings
+
+use "ansi.nt" as term_ansi
+
+use term_native
+
+/// Write `text` to the terminal without a trailing newline.
+fun write(view string text) {
+    io.write(io.stdout(), text)
+    io.flush(io.stdout())
+}
+
+/// Write `text` followed by a newline.
+fun write_line(view string text) {
+    write(copy(text) + "\n")
+}
+
+/// Move the cursor to `column`, `row` (both zero-based) and write `text`.
+fun write_at(int column, int row, view string text) {
+    move_to(column, row)
+    write(text)
+}
+
+/// Flush anything buffered by the output stream.
+fun flush() {
+    io.flush(io.stdout())
+}
+
+/// Terminal width in cells, from `COLUMNS` or 80 when it is unset.
+fun columns() -> int {
+    var value = strings.trim(os.getenv("COLUMNS"))
+    if (fmt.is_int(value)) {
+        var width = fmt.to_int(value)
+        if (width > 0) {
+            return width
+        }
+    }
+    return 80
+}
+
+/// Terminal height in cells, from `LINES` or 24 when it is unset.
+fun rows() -> int {
+    var value = strings.trim(os.getenv("LINES"))
+    if (fmt.is_int(value)) {
+        var height = fmt.to_int(value)
+        if (height > 0) {
+            return height
+        }
+    }
+    return 24
+}
+
+/// Clear the screen and put the cursor in the top-left corner.
+fun clear() {
+    write(term_ansi.csi("2", "J") + term_ansi.csi("", "H"))
+}
+
+/// Clear the line the cursor is on.
+fun clear_line() {
+    write(term_ansi.csi("2", "K"))
+}
+
+/// Clear from the cursor to the end of the screen.
+fun clear_to_end() {
+    write(term_ansi.csi("0", "J"))
+}
+
+/// Move the cursor to `column`, `row` (both zero-based).
+fun move_to(int column, int row) {
+    var target = fmt.i64_to_str(row + 1) + ";" + fmt.i64_to_str(column + 1)
+    write(term_ansi.csi(target, "H"))
+}
+
+/// Move the cursor up `count` lines.
+fun move_up(int count) {
+    write(term_ansi.csi(fmt.i64_to_str(count), "A"))
+}
+
+/// Move the cursor down `count` lines.
+fun move_down(int count) {
+    write(term_ansi.csi(fmt.i64_to_str(count), "B"))
+}
+
+/// Move the cursor right `count` columns.
+fun move_right(int count) {
+    write(term_ansi.csi(fmt.i64_to_str(count), "C"))
+}
+
+/// Move the cursor left `count` columns.
+fun move_left(int count) {
+    write(term_ansi.csi(fmt.i64_to_str(count), "D"))
+}
+
+/// Hide the cursor.
+fun hide_cursor() {
+    write(term_ansi.csi("?25", "l"))
+}
+
+/// Show the cursor again.
+fun show_cursor() {
+    write(term_ansi.csi("?25", "h"))
+}
+
+/// Whether stdout is an interactive terminal.
+fun is_tty() -> bool {
+    return term_native.is_tty()
+}
+
+/// Enter raw mode and the alternate screen; returns the session handle.
+fun open() -> int {
+    return term_native.open()
+}
+
+/// Restore the terminal after `open`.
+fun restore(int handle) -> bool {
+    return term_native.restore(handle)
+}

@@ -1,0 +1,180 @@
+use fmt
+use strings
+
+use "ansi.nt" as term_ansi
+
+/// Wrap `text` in the SGR `parameters`, then reset every attribute.
+private fun wrap(view string parameters, view string text) -> string {
+    return term_ansi.sgr(parameters) + copy(text) + term_ansi.sgr("0")
+}
+
+/// Bold text.
+fun bold(view string text) -> string {
+    return wrap("1", text)
+}
+
+/// Faint text.
+fun dim(view string text) -> string {
+    return wrap("2", text)
+}
+
+/// Italic text.
+fun italic(view string text) -> string {
+    return wrap("3", text)
+}
+
+/// Underlined text.
+fun underline(view string text) -> string {
+    return wrap("4", text)
+}
+
+/// Slowly blinking text.
+fun blink(view string text) -> string {
+    return wrap("5", text)
+}
+
+/// Text with foreground and background swapped.
+fun reverse(view string text) -> string {
+    return wrap("7", text)
+}
+
+/// Struck-through text.
+fun strike(view string text) -> string {
+    return wrap("9", text)
+}
+
+/// Text in palette colour `color` (0–255).
+fun fg(view string text, int color) -> string {
+    return wrap("38;5;" + fmt.i64_to_str(color), text)
+}
+
+/// Text on palette colour `color` (0–255).
+fun bg(view string text, int color) -> string {
+    return wrap("48;5;" + fmt.i64_to_str(color), text)
+}
+
+/// Text in one colour on another.
+fun styled(view string text, int color, int background) -> string {
+    var parameters = "38;5;" + fmt.i64_to_str(color)
+    parameters = parameters + ";48;5;" + fmt.i64_to_str(background)
+    return wrap(parameters, text)
+}
+
+/// The sequence that clears every attribute.
+fun reset() -> string {
+    return term_ansi.sgr("0")
+}
+
+/// `text` without its escape sequences.
+fun strip(view string text) -> string {
+    var out = ""
+    var length = strings.length(text)
+    var i = 0
+    while (i < length) {
+        if (strings.char_code(text, i) == 27) {
+            i = skip_sequence(text, i)
+        } else {
+            var character = strings.char_at(text, i)
+            out = out + character
+            i = i + strings.length(character)
+        }
+    }
+    return out
+}
+
+/// The byte offset just past the control sequence starting at `start`.
+private fun skip_sequence(view string text, int start) -> int {
+    var length = strings.length(text)
+    var i = start + 1
+    if (i < length && strings.char_code(text, i) == 91) {
+        i = i + 1
+        while (i < length) {
+            var code = strings.char_code(text, i)
+            i = i + 1
+            if (code >= 64 && code <= 126) {
+                return i
+            }
+        }
+    }
+    return i
+}
+
+/// Black.
+fun black() -> int {
+    return 0
+}
+
+/// Red.
+fun red() -> int {
+    return 1
+}
+
+/// Green.
+fun green() -> int {
+    return 2
+}
+
+/// Yellow.
+fun yellow() -> int {
+    return 3
+}
+
+/// Blue.
+fun blue() -> int {
+    return 4
+}
+
+/// Magenta.
+fun magenta() -> int {
+    return 5
+}
+
+/// Cyan.
+fun cyan() -> int {
+    return 6
+}
+
+/// White.
+fun white() -> int {
+    return 7
+}
+
+/// Bright black (grey).
+fun bright_black() -> int {
+    return 8
+}
+
+/// Bright red.
+fun bright_red() -> int {
+    return 9
+}
+
+/// Bright green.
+fun bright_green() -> int {
+    return 10
+}
+
+/// Bright yellow.
+fun bright_yellow() -> int {
+    return 11
+}
+
+/// Bright blue.
+fun bright_blue() -> int {
+    return 12
+}
+
+/// Bright magenta.
+fun bright_magenta() -> int {
+    return 13
+}
+
+/// Bright cyan.
+fun bright_cyan() -> int {
+    return 14
+}
+
+/// Bright white.
+fun bright_white() -> int {
+    return 15
+}

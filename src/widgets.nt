@@ -1,0 +1,147 @@
+use arrays
+use strings
+
+use "text.nt" as term_text
+
+/// A horizontal line of `width` box-drawing characters.
+fun hline(int width) -> string {
+    return hline_char(width, "─")
+}
+
+/// A horizontal line of `width` copies of `character`.
+fun hline_char(int width, view string character) -> string {
+    if (strings.is_empty(character)) {
+        return strings.repeat(" ", width)
+    }
+    return strings.repeat(character, width)
+}
+
+/// A horizontal rule with an optional centred title.
+fun rule(view string title, int width) -> string {
+    if (width <= 0) {
+        return ""
+    }
+    if (strings.is_empty(title)) {
+        return hline(width)
+    }
+    var label = " " + copy(title) + " "
+    var label_width = term_text.width(label)
+    if (label_width >= width) {
+        return term_text.truncate(label, width)
+    }
+    var remaining = width - label_width
+    var left = remaining / 2
+    return strings.repeat("─", left) + label + strings.repeat("─", remaining - left)
+}
+
+/// A framed box around `lines`, `width` cells wide including the border.
+fun box(view string title, view array[string] lines, int width) -> string {
+    if (width < 4) {
+        return ""
+    }
+    var inner = width - 4
+    var top = ""
+    if (strings.is_empty(title)) {
+        top = "┌" + strings.repeat("─", width - 2) + "┐"
+    } else {
+        var label = " " + copy(title) + " "
+        var label_width = term_text.width(label)
+        if (label_width > inner) {
+            label = term_text.truncate(label, inner)
+            label_width = term_text.width(label)
+        }
+        top = "┌" + label + strings.repeat("─", width - 2 - label_width) + "┐"
+    }
+    var out = top + "\n"
+    var count = arrays.length(lines)
+    for (var i = 0; i < count; i = i + 1) {
+        var line = term_text.truncate(arrays.get(lines, i), inner)
+        out = out + "│ " + term_text.pad_right(line, inner) + " │\n"
+    }
+    out = out + "└" + strings.repeat("─", width - 2) + "┘"
+    return out
+}
+
+/// A progress bar `width` cells wide, including its brackets.
+fun progress(int done, int total, int width) -> string {
+    if (width < 3) {
+        return ""
+    }
+    var span = width - 2
+    if (total <= 0) {
+        return "[" + strings.repeat("░", span) + "]"
+    }
+    if (done < 0) {
+        done = 0
+    }
+    if (done > total) {
+        done = total
+    }
+    var filled = (done * span) / total
+    return "[" + strings.repeat("█", filled) + strings.repeat("░", span - filled) + "]"
+}
+
+/// One frame of an ASCII spinner, optionally followed by `label`.
+fun spinner(int frame, view string label) -> string {
+    var marks = "|/-\\"
+    var index = frame % 4
+    if (index < 0) {
+        index = index + 4
+    }
+    var mark = strings.substring(marks, index, index + 1)
+    if (strings.is_empty(label)) {
+        return mark
+    }
+    return mark + " " + copy(label)
+}
+
+/// A table from `headers` and `rows` of tab-separated cells.
+///
+/// `widths` gives one column width per column; rows with missing cells are
+/// padded with blanks, and extra cells are ignored.
+fun table(view array[string] headers, view array[string] rows, view array[int] widths) -> string {
+    var columns = arrays.length(widths)
+    if (columns == 0) {
+        return ""
+    }
+    var out = row_text(headers, widths, columns) + "\n"
+    out = out + rule_text(widths, columns) + "\n"
+    var count = arrays.length(rows)
+    for (var i = 0; i < count; i = i + 1) {
+        var cells = strings.split_array(arrays.get(rows, i), "\t")
+        out = out + row_text(cells, widths, columns)
+        if (i < count - 1) {
+            out = out + "\n"
+        }
+    }
+    return out
+}
+
+/// One table row, every cell padded to its column width.
+private fun row_text(view array[string] cells, view array[int] widths, int columns) -> string {
+    var line = ""
+    var available = arrays.length(cells)
+    for (var i = 0; i < columns; i = i + 1) {
+        if (i > 0) {
+            line = line + "  "
+        }
+        var cell = ""
+        if (i < available) {
+            cell = arrays.get(cells, i)
+        }
+        line = line + term_text.pad_right(cell, arrays.get(widths, i))
+    }
+    return line
+}
+
+/// The dashed line under the table header.
+private fun rule_text(view array[int] widths, int columns) -> string {
+    var line = ""
+    for (var i = 0; i < columns; i = i + 1) {
+        if (i > 0) {
+            line = line + "  "
+        }
+        line = line + strings.repeat("─", arrays.get(widths, i))
+    }
+    return line
+}
